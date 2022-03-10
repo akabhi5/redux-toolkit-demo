@@ -1,7 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import contactSlice from "../../slices/contacts";
 import { v1 as uuid } from "uuid";
+import {
+  createContactThunk,
+  deleteContactThunk,
+  fetchContactsThunk,
+  updateContactThunk,
+} from "../../thunks/contacts";
+import "./contacts.css";
 
 export default function Contacts() {
   // get redux state
@@ -22,10 +29,14 @@ export default function Contacts() {
   // create dispatch() function
   const dispatch = useDispatch();
 
+  useEffect(() => {
+    dispatch(fetchContactsThunk());
+  }, [dispatch]);
+
   // on add click
   const onAddClick = () => {
     dispatch(
-      contactSlice.actions.add({
+      createContactThunk({
         id: uuid(),
         firstName,
         lastName,
@@ -42,7 +53,7 @@ export default function Contacts() {
 
   const onDeleteClick = (contact) => {
     if (window.confirm("Are you sure want to delete this contact?")) {
-      dispatch(contactSlice.actions.remove(contact.id));
+      dispatch(deleteContactThunk(contact.id));
     }
   };
 
@@ -56,7 +67,7 @@ export default function Contacts() {
 
   const onUpdateClick = () => {
     dispatch(
-      contactSlice.actions.update({
+      updateContactThunk({
         id: editId,
         firstName: editFirstName,
         lastName: editLastName,
@@ -70,7 +81,15 @@ export default function Contacts() {
   return (
     <div>
       <div className="container">
-        <h4 className="grid-header">Contacts</h4>
+        <h4 className="grid-header">
+          Contacts &nbsp; &nbsp;
+          {contacts.status === "pending" ? (
+            <i className="fas fa-spinner fa-spin"></i>
+          ) : (
+            ""
+          )}
+          <span className="text-red">{contacts.error?.message}</span>
+        </h4>
 
         <div className="box">
           <details>
@@ -129,7 +148,7 @@ export default function Contacts() {
                 </tr>
               </thead>
               <tbody>
-                {contacts.map((contact, index) => (
+                {contacts.data.map((contact, index) => (
                   <tr key={contact.id}>
                     <td>{index + 1}</td>
                     <td>
